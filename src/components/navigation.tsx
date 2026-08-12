@@ -57,8 +57,8 @@ export default function Navigation() {
       className={cn(
         "fixed top-0 w-full z-50 transition-all duration-500",
         scrolled
-          ? "glass-strong border-b border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.2)]"
-          : "glass border-b border-transparent",
+          ? "bg-background/80 backdrop-blur-xl border-b border-white/10 shadow-lg"
+          : "bg-background/60 backdrop-blur-md border-b border-transparent",
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -211,7 +211,7 @@ export default function Navigation() {
                   <Button
                     variant="outline"
                     className="w-full glass border-white/10 text-white hover:bg-white/5 py-3 rounded-lg"
-                    onClick={() => {
+                    onPointerDown={() => {
                       setIsOpen(false)
                       signOut({ callbackUrl: "/" })
                     }}
@@ -317,7 +317,7 @@ function UserAvatar({ session }: { session: any }) {
           <div className="border-t border-white/10">
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onPointerDown={() => signOut({ callbackUrl: "/" })}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
             >
               <LogOut className="w-4 h-4" />
