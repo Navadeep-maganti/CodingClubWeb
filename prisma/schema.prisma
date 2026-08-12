@@ -1,0 +1,528 @@
+// Prisma schema for Coding Club NIT Andhra Pradesh
+// Database: PostgreSQL (Supabase)
+//
+// Configure via environment variables:
+//   DATABASE_URL  - Supabase Transaction pooler (port 6543, pgbouncer=true)
+//   DIRECT_URL    - Supabase Session pooler (port 5432, used by Prisma Migrate)
+//
+// See SUPABASE_DEPLOYMENT.md for setup instructions.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =========================================================
+// AUTH & USERS
+// =========================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  rollNumber    String?   @unique
+  image         String?
+  emailVerified DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts   Account[]
+  sessions   Session[]
+  userRoles  UserRole[]
+  teamMember TeamMember?
+  blogAuthor BlogAuthor?
+  blogs      Blog[]
+  comments   BlogComment[]
+  auditLogs  AuditLog[]
+
+  @@index([rollNumber])
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(onDelete: Cascade, fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(onDelete: Cascade, fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// =========================================================
+// APPROVED ROLL NUMBERS (Whitelist)
+// =========================================================
+
+model ApprovedRollNumber {
+  id         String   @id @default(cuid())
+  rollNumber String   @unique
+  email      String?
+  addedById  String?
+  notes      String?
+  isUsed     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([rollNumber])
+  @@index([isUsed])
+}
+
+// =========================================================
+// ROLES & RBAC
+// =========================================================
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+
+  userRoles UserRole[]
+}
+
+model UserRole {
+  id           String   @id @default(cuid())
+  userId       String
+  roleId       String
+  assignedById String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(onDelete: Cascade, fields: [userId], references: [id])
+  role Role @relation(onDelete: Cascade, fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+// =========================================================
+// TEAM MEMBERS
+// =========================================================
+
+model TeamMember {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  name         String
+  bio          String?
+  profileImage String?
+  strengths    String
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  isFeatured   Boolean  @default(false)
+  category     String   @default("Member")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user        User         @relation(onDelete: Cascade, fields: [userId], references: [id])
+  socialLinks SocialLink[]
+
+  @@index([displayOrder])
+  @@index([isActive])
+  @@index([category])
+}
+
+model SocialLink {
+  id           String   @id @default(cuid())
+  teamMemberId String
+  platform     String
+  url          String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  teamMember TeamMember @relation(onDelete: Cascade, fields: [teamMemberId], references: [id])
+
+  @@unique([teamMemberId, platform])
+  @@index([teamMemberId])
+}
+
+// =========================================================
+// BLOG SYSTEM
+// =========================================================
+
+model BlogAuthor {
+  id          String   @id @default(cuid())
+  userId      String?  @unique
+  displayName String
+  bio         String?
+  avatar      String?
+  isApproved  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User?  @relation(onDelete: SetNull, fields: [userId], references: [id])
+  blogs Blog[]
+
+  @@index([userId])
+  @@index([isApproved])
+}
+
+model Blog {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String
+  content     String
+  coverImage  String?
+  published   Boolean   @default(false)
+  featured    Boolean   @default(false)
+  readTime    String?
+  viewCount   Int       @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  authorId    String?
+  categoryId  String?
+  createdById String?
+
+  author   BlogAuthor?   @relation(onDelete: SetNull, fields: [authorId], references: [id])
+  category BlogCategory? @relation(onDelete: SetNull, fields: [categoryId], references: [id])
+  creator  User?         @relation(onDelete: SetNull, fields: [createdById], references: [id])
+  tags     BlogTagMap[]
+  comments BlogComment[]
+
+  @@index([slug])
+  @@index([published])
+  @@index([featured])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([publishedAt])
+}
+
+model BlogCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  blogs Blog[]
+}
+
+model BlogTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  blogs BlogTagMap[]
+}
+
+model BlogTagMap {
+  id        String   @id @default(cuid())
+  blogId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  blog Blog    @relation(onDelete: Cascade, fields: [blogId], references: [id])
+  tag  BlogTag @relation(onDelete: Cascade, fields: [tagId], references: [id])
+
+  @@unique([blogId, tagId])
+  @@index([blogId])
+  @@index([tagId])
+}
+
+model BlogComment {
+  id          String   @id @default(cuid())
+  blogId      String
+  userId      String?
+  authorName  String
+  authorEmail String?
+  content     String
+  isApproved  Boolean  @default(false)
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  blog Blog  @relation(onDelete: Cascade, fields: [blogId], references: [id])
+  user User? @relation(onDelete: SetNull, fields: [userId], references: [id])
+
+  @@index([blogId])
+  @@index([userId])
+  @@index([isApproved])
+}
+
+// =========================================================
+// AUDIT LOGGING
+// =========================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(onDelete: SetNull, fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+// =========================================================
+// DYNAMIC SITE CONTENT (CMS)
+// =========================================================
+// These models allow the Super Admin to configure EVERY visible
+// piece of content on the website from the dashboard — no code
+// changes required.
+// =========================================================
+
+/**
+ * Key/value store for global site settings:
+ * - club_name
+ * - club_tagline
+ * - hero_title, hero_subtitle, hero_description
+ * - hero_cta_primary_label, hero_cta_primary_href
+ * - hero_cta_secondary_label, hero_cta_secondary_href
+ * - footer_description, footer_copyright
+ * - discord_url, get_started_url
+ * - about_hero_title, about_hero_description
+ * - about_vision_text, about_vision_card_title, about_vision_card_subtitle
+ * - about_mission_intro
+ * - events_hero_title, events_hero_description
+ * - resources_hero_title, resources_hero_description
+ * - blog_hero_title, blog_hero_description
+ * - team_hero_title, team_hero_description
+ * - faculty_advisor_name, faculty_advisor_position, faculty_advisor_department,
+ * faculty_advisor_image, faculty_advisor_bio, faculty_advisor_email
+ * faculty_advisor_expertise (JSON array)
+ * - events_page_empty_title, events_page_empty_message
+ */
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * Pillars shown in the "Who We Are" section on the home page.
+ */
+model Pillar {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  iconName     String   @default("Code") // lucide icon name
+  colorFrom    String   @default("from-primary")
+  colorTo      String   @default("to-blue-600")
+  features     String   @default("[]") // JSON array of feature strings
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+/**
+ * Domains shown on the home page "Our Domains" section.
+ */
+model Domain {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  iconName     String   @default("Code")
+  color        String   @default("#4A90E2")
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+/**
+ * Hero stats (Active Members, Events Hosted, Projects Built, etc.)
+ */
+model HeroStat {
+  id           String   @id @default(cuid())
+  iconName     String   @default("Users") // lucide icon
+  value        String   @default("0+")
+  label        String
+  description  String?
+  gradient     String   @default("from-blue-500 to-blue-600")
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+/**
+ * Events (both upcoming and past).
+ */
+model Event {
+  id               String   @id @default(cuid())
+  title            String
+  description      String
+  date             DateTime
+  time             String   @default("10:00 AM")
+  location         String   @default("TBD")
+  type             String   @default("Workshop") // Workshop | Contest | Bootcamp | Hackathon | Webinar
+  status           String   @default("upcoming") // upcoming | past
+  image            String?
+  registrations    Int      @default(0)
+  maxRegistrations Int      @default(100)
+  registrationUrl  String?
+  displayOrder     Int      @default(0)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([date])
+  @@index([isActive])
+  @@index([displayOrder])
+}
+
+/**
+ * About page mission cards.
+ */
+model MissionCard {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  iconName     String   @default("Target")
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+/**
+ * Resource hub items - polymorphic-style content with a `category` field.
+ * Categories used by the UI:
+ * - "roadmap"      -> Learning Roadmaps
+ * - "toolkit"      -> Development Toolkits
+ * - "project"      -> Club Projects
+ * - "link_category" -> Curated Links (parent)
+ * - "link"          -> Curated Links (child, parent = link_category id)
+ */
+model ResourceItem {
+  id              String   @id @default(cuid())
+  category        String   @default("link") // roadmap | toolkit | project | link_category | link
+  parentId        String? // for nested links; points to a link_category ResourceItem
+  title           String
+  description     String?
+  // Roadmap fields
+  difficulty      String?
+  duration        String?
+  topics          String?  @default("[]") // JSON array
+  // Toolkit fields
+  tools           String?  @default("[]") // JSON array
+  toolkitCategory String?
+  downloads       Int      @default(0)
+  // Project fields
+  tech            String?  @default("[]") // JSON array
+  author          String?
+  stars           Int      @default(0)
+  github          String?
+  // Link fields
+  url             String?
+  displayOrder    Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category])
+  @@index([parentId])
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+/**
+ * Footer social links (LinkedIn, Email, Instagram, etc.)
+ */
+model FooterLink {
+  id           String   @id @default(cuid())
+  platform     String   @unique // linkedin | email | instagram | github | twitter | discord | website
+  label        String
+  url          String
+  iconName     String   @default("ExternalLink") // lucide icon name
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+/**
+ * Footer quick links (About, Events, Team, Resources, Blog, etc.)
+ */
+model FooterQuickLink {
+  id           String   @id @default(cuid())
+  label        String
+  href         String
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+}
+
+/**
+ * Footer contact info (address, email, etc.)
+ */
+model FooterContact {
+  id           String   @id @default(cuid())
+  label        String // "Address" | "Email" | "Phone"
+  value        String
+  iconName     String   @default("MapPin") // lucide icon
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([displayOrder])
+  @@index([isActive])
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Coding Club, NIT Andhra Pradesh",
+  "short_name": "Coding Club NITAP",
+  "description": "The official website of Coding Club, NIT Andhra Pradesh. Empowering students through technology, innovation, and collaborative learning.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0F1E",
+  "theme_color": "#4A90E2",
+  "icons": [
+    {
+      "src": "/images/coding-club-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/coding-club-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

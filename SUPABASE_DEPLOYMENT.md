@@ -1,0 +1,146 @@
+# Supabase Deployment Guide
+
+This document explains how to deploy the Coding Club Web project to Supabase (PostgreSQL).
+
+## 1. Why Two Schemas?
+
+The project ships with **two Prisma schemas**:
+
+| File | Provider | Use Case |
+|------|----------|----------|
+| `prisma/schema.prisma` | `sqlite` | Local sandbox dev (no Postgres available in this env) |
+| `prisma/schema.prisma.production` | `postgresql` | **Supabase / production deployment** |
+
+Both files define **identical models** — only the `datasource` block differs.
+
+## 2. Switching to PostgreSQL (Supabase)
+
+### Step 1: Provision a Supabase project
+1. Go to https://supabase.com and create a new project.
+2. Wait for the project to be provisioned (~2 minutes).
+3. Navigate to **Project Settings → Database → Connection string**.
+4. Copy both:
+   - **Transaction pooler** URL (port `6543`) → this is `DATABASE_URL`
+   - **Session pooler** URL (port `5432`) → this is `DIRECT_URL`
+
+### Step 2: Restore the PostgreSQL schema
+```bash
+# Replace the local SQLite schema with the PostgreSQL version
+cp prisma/schema.prisma.production prisma/schema.prisma
+```
+
+### Step 3: Configure environment variables
+Edit your `.env` (local) or your deployment platform's env vars:
+
+```bash
+# Supabase connection (Transaction mode — used by Prisma Client at runtime)
+DATABASE_URL="postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true"
+
+# Supabase connection (Session mode — used by Prisma Migrate)
+DIRECT_URL="postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres"
+
+# NextAuth
+NEXTAUTH_URL="https://your-production-domain.com"
+NEXTAUTH_SECRET="<generate a fresh 32-byte base64 secret>"
+
+# Google OAuth (must update redirect URIs in Google Cloud Console)
+GOOGLE_CLIENT_ID="<your-client-id>"
+GOOGLE_CLIENT_SECRET="<your-client-secret>"
+
+# RBAC bootstrapping — the roll number that becomes SUPER_ADMIN on first login
+INITIAL_SUPER_ADMIN_ROLL_NUMBER="424161"
+```
+
+### Step 4: Apply the migration to Supabase
+```bash
+# Generate a fresh Prisma client for PostgreSQL
+npx prisma generate
+
+# Apply the migration (uses DIRECT_URL under the hood)
+npx prisma migrate dev --name init
+
+# OR, if you prefer to apply the pre-rendered SQL directly:
+# psql "<DIRECT_URL>" -f prisma/migrations/20260811193837_init/migration.postgres.sql
+```
+
+### Step 5: Seed the database
+```bash
+# Option A: TypeScript seeder (recommended — full team + blog content)
+npm run seed
+
+# Option B: Raw SQL (basic RBAC + roll numbers only)
+psql "<DIRECT_URL>" -f db/sql/seed.sql
+
+# Option C: Add the two hardcoded admin roll numbers
+npx tsx scripts/add-admins.ts
+```
+
+### Step 6: Update Google OAuth redirect URIs
+In Google Cloud Console → APIs & Services → Credentials → your OAuth client:
+- Add `https://your-production-domain.com/api/auth/callback/google`
+- Keep `http://localhost:3000/api/auth/callback/google` for local dev
+
+### Step 7: Deploy
+```bash
+npm run build
+npm run start
+```
+Or deploy on Vercel — set the env vars in the Vercel dashboard.
+
+## 3. Verifying the Roll Numbers (RBAC)
+
+After seeding, the `approved_roll_numbers` table contains:
+
+| roll_number | notes | becomes |
+|--------------|-------|---------|
+| `424161` | Bootstrapped super admin (initial) | `SUPER_ADMIN` on first sign-in |
+| `424157` | Granted admin via script | `SUPER_ADMIN` on first sign-in (hardcoded in `auth.ts`) |
+| `000001` | Test member (default fallback) | `MEMBER` on first sign-in |
+
+To add more roll numbers later, use the admin dashboard at `/dashboard/admin` (Content → Roll Numbers) or run:
+```bash
+npx tsx scripts/add-admins.ts  # edit the rolls array first
+```
+
+## 4. Roles Currently in the System
+
+The codebase (`src/lib/rbac.ts`) defines **three** roles:
+
+| Role | Purpose |
+|------|---------|
+| `SUPER_ADMIN` | Full system access — can manage all content, team, blogs, members. |
+| `MEMBER` | Default role for any approved roll number that is not a super admin. |
+| `BLOG_AUTHOR` | Member + blog authoring rights (CREATE_BLOG, EDIT_OWN_BLOG, DELETE_OWN_BLOG). |
+
+> **Note**: The original brief mentioned 5 roles (`SUPER_ADMIN`, `ADMIN`, `CONTENT_MANAGER`, `EVENT_MANAGER`, `MEMBER`). The actual codebase only uses 3. If you want to add `ADMIN`, `CONTENT_MANAGER`, and `EVENT_MANAGER`, you'll need to:
+> 1. Add them to `ROLES` and `ROLE_PERMISSIONS` in `src/lib/rbac.ts`
+> 2. Add them to the seed scripts (`scripts/seed.ts` calls `ensureRoles()` which iterates `Object.values(ROLES)`, so they'll be auto-seeded)
+> 3. Update the admin dashboard UI to allow assigning these roles
+
+## 5. Files Modified During Setup
+
+| File | Change | Reason |
+|------|--------|--------|
+| `prisma/schema.prisma` | Switched `provider` to `sqlite`, removed `directUrl` | No PostgreSQL available in the sandbox |
+| `prisma/schema.prisma.production` | **NEW** — backup of the original PostgreSQL schema | Easy switch back for production |
+| `prisma/migrations/20260811193837_init/migration.sql` | Generated by `prisma migrate dev` | SQLite migration |
+| `prisma/migrations/20260811193837_init/migration.postgres.sql` | **NEW** — PostgreSQL migration via `prisma migrate diff` | Apply to Supabase |
+| `.env` | Updated with proper NEXTAUTH_SECRET, GOOGLE creds, INITIAL_SUPER_ADMIN_ROLL_NUMBER | Required for NextAuth + RBAC |
+| `src/components/hero-3d.tsx` | Fixed `useRef<any>()` → `useRef<any>(null)` (2 places) | React 19 requires an initial argument to `useRef` |
+| `src/components/navigation.tsx` | Fixed desktop "Sign Out" link → `signOut({ callbackUrl: "/" })` button | The mobile menu used `signOut()` correctly, but the desktop avatar dropdown used `<a href="/api/auth/signout">` — now both use the native `next-auth/react` flow |
+| `tsconfig.json` | Added `skills/` and `scripts/` to `exclude` | The sandbox's `skills/` folder has unrelated `.ts` files that broke the build |
+| `scripts/add-test-rolls.ts` | **NEW** — adds `000001` to whitelist | Test roll number for member flow |
+
+## 6. Verification Performed
+
+- ✅ `npm install` completed (901 packages)
+- ✅ `npx prisma migrate dev --name init` applied successfully
+- ✅ `npm run seed` seeded 3 roles, 3 roll numbers, 36 team members, 6 blogs, 64 site settings, 3 pillars, 6 domains, 4 events, 27 resources, footer content
+- ✅ `npm run build` succeeds — 28 routes compiled, no TypeScript errors
+- ✅ No hydration mismatches in dev log
+- ✅ Premium dark theme preserved (verified via VLM screenshot analysis)
+- ✅ All public pages render: `/`, `/about`, `/events`, `/team`, `/resources`, `/blog`
+- ✅ `/login` shows "Continue with Google" button
+- ✅ `/dashboard/admin` correctly redirects to `/login?callbackUrl=...` when unauthenticated
+- ✅ `/api/auth/session` returns 200 (NextAuth infrastructure working)
+- ✅ Sign-out flow unified to use `signOut({ callbackUrl: "/" })` on both mobile and desktop
