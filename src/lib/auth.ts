@@ -84,10 +84,9 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         params: {
           prompt: "select_account",
-          // Note: we do NOT enforce hd here because the bootstrap email
-          // (coding@nitandhra.ac.in) lives on a different Google Workspace
-          // tenant than student.nitandhra.ac.in. Server-side validation
-          // in the signIn callback is the authoritative gate.
+          // Restrict to Google Workspace accounts only (*). We don't restrict to exactly 
+          // "student.nitandhra.ac.in" because "coding@nitandhra.ac.in" is on a different domain.
+          hd: "*",
         },
       },
     }),

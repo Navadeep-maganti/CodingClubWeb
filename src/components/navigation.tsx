@@ -55,7 +55,7 @@ export default function Navigation() {
   return (
     <nav
       className={cn(
-        "fixed top-0 w-full z-50 transition-all duration-500",
+        "fixed top-0 w-full z-[100] transition-all duration-500",
         scrolled
           ? "bg-background/80 backdrop-blur-xl border-b border-white/10 shadow-lg"
           : "bg-background/60 backdrop-blur-md border-b border-transparent",
@@ -277,7 +277,7 @@ function UserAvatar({ session }: { session: any }) {
         <ChevronDown className={cn("w-3 h-3 text-gray-400 transition-transform", open && "rotate-180")} />
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-64 glass-strong rounded-xl shadow-2xl border border-white/10 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute right-0 mt-2 w-64 bg-[#0b0f17]/95 backdrop-blur-xl rounded-xl shadow-2xl border border-white/10 overflow-hidden z-[999] animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="px-4 py-3 border-b border-white/10 bg-white/5">
             <p className="text-white text-sm font-semibold truncate">{user.name || "Member"}</p>
             <p className="text-gray-400 text-xs truncate">{user.email}</p>

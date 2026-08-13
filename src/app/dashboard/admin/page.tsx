@@ -35,28 +35,8 @@ export default async function AdminDashboardPage({
     : highestRole === ROLES.ADMIN ? "team"
     : "blogs"
 
-  // Initial data fetch
-  const [
-    users,
-    approvedRolls,
-    teamMembers,
-    blogs,
-    blogAuthors,
-    auditLogs,
-    categories,
-    tags,
-    blogList,
-    siteSettingsRows,
-    pillars,
-    domains,
-    heroStats,
-    events,
-    missions,
-    resourceItems,
-    footerSocial,
-    footerQuickLinks,
-    footerContacts,
-  ] = await Promise.all([
+  // Batch 1: User & Core Data
+  const [users, approvedRolls, teamMembers, blogs, blogAuthors] = await Promise.all([
     db.user.findMany({
       where: { NOT: { email: { startsWith: "placeholder+" } } },
       include: { userRoles: { include: { role: true } }, teamMember: true, blogAuthor: true },
@@ -72,6 +52,10 @@ export default async function AdminDashboardPage({
       orderBy: { createdAt: "desc" },
     }),
     db.blogAuthor.findMany({ include: { user: { select: { email: true, name: true } } } }),
+  ])
+
+  // Batch 2: Audit Logs & Blog Categories
+  const [auditLogs, categories, tags, blogList, siteSettingsRows] = await Promise.all([
     db.auditLog.findMany({
       take: 200,
       orderBy: { createdAt: "desc" },
@@ -86,11 +70,19 @@ export default async function AdminDashboardPage({
       select: { id: true, title: true, slug: true, viewCount: true, publishedAt: true },
     }),
     db.siteSetting.findMany(),
+  ])
+
+  // Batch 3: CMS & Content
+  const [pillars, domains, heroStats, events, missions] = await Promise.all([
     db.pillar.findMany({ orderBy: { displayOrder: "asc" } }),
     db.domain.findMany({ orderBy: { displayOrder: "asc" } }),
     db.heroStat.findMany({ orderBy: { displayOrder: "asc" } }),
     db.event.findMany({ orderBy: [{ displayOrder: "asc" }, { date: "asc" }] }),
     db.missionCard.findMany({ orderBy: { displayOrder: "asc" } }),
+  ])
+
+  // Batch 4: Resources & Footer
+  const [resourceItems, footerSocial, footerQuickLinks, footerContacts] = await Promise.all([
     db.resourceItem.findMany({ orderBy: { displayOrder: "asc" } }),
     db.footerLink.findMany({ orderBy: { displayOrder: "asc" } }),
     db.footerQuickLink.findMany({ orderBy: { displayOrder: "asc" } }),

@@ -222,25 +222,25 @@ export default function BlogClient({
               <FilterChip
                 active={filter === "latest"}
                 onClick={() => setFilter("latest")}
-                icon={<Clock className="w-3.5 h-3.5" />}
+                icon={<Clock className="w-3.5 h-3.5" fill="currentColor" />}
                 label="Latest"
               />
               <FilterChip
                 active={filter === "trending"}
                 onClick={() => setFilter("trending")}
-                icon={<Flame className="w-3.5 h-3.5" />}
+                icon={<Flame className="w-3.5 h-3.5" fill="currentColor" />}
                 label="Trending"
               />
               <FilterChip
                 active={filter === "featured"}
                 onClick={() => setFilter("featured")}
-                icon={<Star className="w-3.5 h-3.5" />}
+                icon={<Star className="w-3.5 h-3.5" fill="currentColor" />}
                 label="Featured"
               />
               <FilterChip
                 active={filter === "most-read"}
                 onClick={() => setFilter("most-read")}
-                icon={<Eye className="w-3.5 h-3.5" />}
+                icon={<Eye className="w-3.5 h-3.5" fill="currentColor" />}
                 label="Most Read"
               />
             </div>
@@ -273,7 +273,7 @@ export default function BlogClient({
         <section className="px-4 sm:px-6 lg:px-8 mb-20 relative z-10">
           <div className="max-w-7xl mx-auto">
             <SectionHeader
-              icon={<Flame className="w-5 h-5 text-[#FF6B6B]" />}
+              icon={<Flame className="w-5 h-5 text-[#FF6B6B]" fill="currentColor" />}
               title="Trending Articles"
               subtitle="What the community is reading right now"
             />
@@ -507,7 +507,7 @@ function TrendingCard({ item, rank }: { item: TrendingItem; rank: number }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FF6B6B] text-white text-xs font-bold">
-            <Flame className="w-3 h-3" />
+            <Flame className="w-3 h-3" fill="currentColor" />
             #{rank}
           </div>
           {item.category && (

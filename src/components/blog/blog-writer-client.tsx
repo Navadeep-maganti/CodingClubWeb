@@ -266,7 +266,7 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
       <Navigation />
 
       {/* Action Header Bar */}
-      <section className="pt-24 pb-4 px-4 sm:px-6 lg:px-8 border-b border-white/10 relative z-20 backdrop-blur-md bg-black/40">
+      <section className="pt-24 pb-4 px-4 sm:px-6 lg:px-8 border-b border-white/10 relative z-0 backdrop-blur-md bg-black/40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Left: Back Link & Word Counter */}
           <div className="flex items-center gap-4">
@@ -294,7 +294,6 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
                 viewMode === "edit" ? "bg-[#4A90E2] text-white shadow-md" : "text-gray-400 hover:text-white"
               }`}
             >
-              <Edit3 className="w-3.5 h-3.5" />
               <span>Write</span>
             </button>
             <button
@@ -303,7 +302,6 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
                 viewMode === "split" ? "bg-[#4A90E2] text-white shadow-md" : "text-gray-400 hover:text-white"
               }`}
             >
-              <Columns className="w-3.5 h-3.5" />
               <span>Split</span>
             </button>
             <button
@@ -312,7 +310,6 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
                 viewMode === "preview" ? "bg-[#4A90E2] text-white shadow-md" : "text-gray-400 hover:text-white"
               }`}
             >
-              <Eye className="w-3.5 h-3.5" />
               <span>Medium Reader Preview</span>
             </button>
           </div>
@@ -326,7 +323,7 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
               }`}
               title="Post Settings"
             >
-              <Settings className="w-4 h-4" />
+              <span className="text-xs font-medium px-2">Settings</span>
             </button>
 
             <Button
@@ -335,7 +332,7 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
               onClick={() => handleSave(false)}
               className="border-white/20 text-white hover:bg-white/10 text-xs"
             >
-              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null}
               Save Draft
             </Button>
 
@@ -344,7 +341,7 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
               onClick={() => handleSave(true)}
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-medium shadow-md shadow-blue-500/20"
             >
-              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Send className="w-3.5 h-3.5 mr-1.5" />}
+              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null}
               Publish Article
             </Button>
           </div>

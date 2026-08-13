@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
 import PremiumPageBackground from "@/components/premium-page-background"
 import { Button } from "@/components/ui/button"
-import { Loader2, Shield, Lock, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
 import { motion } from "framer-motion"
 
 function LoginContent() {
@@ -39,17 +39,11 @@ function LoginContent() {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-8"
         >
-          <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-6">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl blur-2xl opacity-30" />
-            <div className="relative w-20 h-20 rounded-2xl glass-strong border border-white/10 flex items-center justify-center">
-              <Lock className="h-8 w-8 text-blue-400" />
-            </div>
-          </div>
           <h1 className="font-heading font-bold text-4xl mb-4">
-            <span className="gradient-text-premium">Sign In</span>
+            <span className="text-white">Sign In</span>
           </h1>
           <p className="text-gray-300 text-lg">
-            Access the Coding Club member portal and dashboard.
+            Access the Coding Club portal.
           </p>
         </motion.div>
 
@@ -71,28 +65,8 @@ function LoginContent() {
               </div>
             )}
 
-            <div className="space-y-4 mb-6">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-gray-100 text-sm font-medium">Approved roll numbers only</p>
-                  <p className="text-gray-400 text-xs">Only whitelisted NITAP students can sign in.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-gray-100 text-sm font-medium">@student.nitandhra.ac.in</p>
-                  <p className="text-gray-400 text-xs">You must use your institute email account.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-gray-100 text-sm font-medium">Role-based access</p>
-                  <p className="text-gray-400 text-xs">Your role determines what you can do.</p>
-                </div>
-              </div>
+            <div className="space-y-4 mb-6 text-center text-sm text-gray-300">
+              <p>Please use your @student.nitandhra.ac.in account.</p>
             </div>
 
             <Button
