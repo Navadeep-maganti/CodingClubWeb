@@ -21,6 +21,9 @@ import ContentTab from "@/components/admin-content-tab"
 import PremiumPageBackground from "@/components/premium-page-background"
 import { motion } from "framer-motion"
 import { ROLES, type RoleName } from "@/lib/rbac"
+import { TipTapEditor } from "@/components/blog/tiptap-editor"
+import BlogAnalyticsTab from "@/components/blog/blog-analytics-tab"
+import { BarChart3 } from "lucide-react"
 import {
   Users,
   Shield,
@@ -203,7 +206,7 @@ export default function AdminDashboardClient({ data }: { data: AdminData }) {
   //   ADMIN        -> team, blogs, authors, content (NO members, NO audit)
   //   BLOG_AUTHOR  -> blogs, authors only
   const visibleTabs = useMemo(() => {
-    const tabs: string[] = ["blogs", "authors"]
+    const tabs: string[] = ["blogs", "authors", "analytics"]
     if (role === ROLES.SUPER_ADMIN || role === ROLES.ADMIN) {
       tabs.push("team", "content")
     }
@@ -555,6 +558,11 @@ export default function AdminDashboardClient({ data }: { data: AdminData }) {
                   <PenSquare className="h-4 w-4 mr-2" /> Authors
                 </TabsTrigger>
               )}
+              {visibleTabs.includes("analytics") && (
+                <TabsTrigger value="analytics" className="data-[state=active]:bg-[#4A90E2] data-[state=active]:text-white text-[#B0B0B0]">
+                  <BarChart3 className="h-4 w-4 mr-2" /> Analytics
+                </TabsTrigger>
+              )}
               {visibleTabs.includes("content") && (
                 <TabsTrigger value="content" className="data-[state=active]:bg-[#4A90E2] data-[state=active]:text-white text-[#B0B0B0]">
                   <LayoutDashboard className="h-4 w-4 mr-2" /> Content
@@ -823,13 +831,13 @@ export default function AdminDashboardClient({ data }: { data: AdminData }) {
                     />
                   </div>
                   <div>
-                    <Label className="text-[#E0E0E0] text-sm">Content (Markdown)</Label>
-                    <Textarea
-                      value={newBlog.content}
-                      onChange={(e) => setNewBlog({ ...newBlog, content: e.target.value })}
-                      rows={6}
-                      className="bg-[#1A1F2E] border-white/10 text-[#E0E0E0] font-mono"
-                      placeholder="# My Title\n\nContent goes here..."
+                    <Label className="text-[#E0E0E0] text-sm">Content</Label>
+                    <TipTapEditor
+                      content={newBlog.content}
+                      onChange={(html) => setNewBlog({ ...newBlog, content: html })}
+                      placeholder="Start writing your story..."
+                      className="bg-[#0B1120]"
+                      onImageUpload={async (file) => uploadFile(file, "blog")}
                     />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1151,6 +1159,11 @@ export default function AdminDashboardClient({ data }: { data: AdminData }) {
                 </CardContent>
               </Card>
             </TabsContent>
+            {/* ============= ANALYTICS TAB ============= */}
+            <TabsContent value="analytics" className="space-y-6 mt-6">
+              <BlogAnalyticsTab />
+            </TabsContent>
+
           </Tabs>
         </div>
       </section>
@@ -1235,13 +1248,20 @@ function BlogEditor({
   const [readTime, setReadTime] = useState(blog.readTime)
   const [featured, setFeatured] = useState(blog.featured)
   const [selectedTags, setSelectedTags] = useState<string[]>(blog.tags)
+  const [newTag, setNewTag] = useState("")
 
   return (
     <div className="space-y-3">
       <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="bg-[#1A1F2E] border-white/10 text-[#E0E0E0]" />
       <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="Slug" className="bg-[#1A1F2E] border-white/10 text-[#E0E0E0]" />
       <Input value={excerpt} onChange={(e) => setExcerpt(e.target.value)} placeholder="Excerpt" className="bg-[#1A1F2E] border-white/10 text-[#E0E0E0]" />
-      <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={8} placeholder="Content (Markdown)" className="bg-[#1A1F2E] border-white/10 text-[#E0E0E0] font-mono" />
+      <TipTapEditor
+        content={content}
+        onChange={setContent}
+        placeholder="Start writing your story..."
+        className="bg-[#0B1120]"
+        onImageUpload={async (file) => onUpload(file, "blog")}
+      />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="px-3 py-2 bg-[#1A1F2E] border border-white/10 rounded-lg text-[#E0E0E0]">
           <option value="">— Category —</option>
@@ -1267,23 +1287,63 @@ function BlogEditor({
           className="block w-full text-sm text-[#B0B0B0] file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-[#4A90E2] file:text-white file:cursor-pointer"
         />
       </div>
-      <div className="flex flex-wrap gap-1">
-        {tags.map((t) => {
-          const sel = selectedTags.includes(t.name)
-          return (
-            <button
-              key={t.id}
-              onClick={() => setSelectedTags(sel ? selectedTags.filter((x) => x !== t.name) : [...selectedTags, t.name])}
-              className={`px-2 py-1 rounded text-xs border ${
-                sel
-                  ? "bg-[#4A90E2]/20 text-[#4A90E2] border-[#4A90E2]/40"
-                  : "bg-transparent text-[#B0B0B0] border-white/10"
-              }`}
-            >
-              {t.name}
-            </button>
-          )
-        })}
+      <div>
+        <Label className="text-[#E0E0E0] text-sm mb-2 block">Tags</Label>
+        <div className="flex gap-2 mb-2">
+          <Input
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            placeholder="Type tag name and press Enter"
+            className="bg-[#1A1F2E] border-white/10 text-[#E0E0E0]"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                const t = newTag.trim()
+                if (t && !selectedTags.includes(t)) {
+                  setSelectedTags([...selectedTags, t])
+                  setNewTag("")
+                }
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            className="border-[#4A90E2]/30 text-[#4A90E2]"
+            onClick={() => {
+              const t = newTag.trim()
+              if (t && !selectedTags.includes(t)) {
+                setSelectedTags([...selectedTags, t])
+                setNewTag("")
+              }
+            }}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {tags.map((t) => {
+            const sel = selectedTags.includes(t.name)
+            return (
+              <button
+                key={t.id}
+                onClick={() => setSelectedTags(sel ? selectedTags.filter((x) => x !== t.name) : [...selectedTags, t.name])}
+                className={`px-2 py-1 rounded text-xs border ${
+                  sel
+                    ? "bg-[#4A90E2]/20 text-[#4A90E2] border-[#4A90E2]/40"
+                    : "bg-transparent text-[#B0B0B0] border-white/10"
+                }`}
+              >
+                {t.name}
+              </button>
+            )
+          })}
+          {selectedTags.filter((t) => !tags.some((db) => db.name === t)).map((t) => (
+            <span key={t} className="px-2 py-1 rounded text-xs bg-[#50C878]/20 text-[#50C878] border border-[#50C878]/40">
+              {t} <X className="h-3 w-3 ml-1 inline cursor-pointer" onClick={() => setSelectedTags(selectedTags.filter((x) => x !== t))} />
+            </span>
+          ))}
+        </div>
       </div>
       <label className="flex items-center gap-2 text-[#E0E0E0] text-sm cursor-pointer">
         <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} className="accent-[#4A90E2]" />

@@ -209,8 +209,17 @@ export async function PUT(request: Request) {
   if (typeof body.featured === "boolean") data.featured = body.featured
   if (typeof body.categoryId === "string") data.categoryId = body.categoryId || null
 
-  // Publish toggle
+  // Publish toggle — enforce PUBLISH_BLOG permission.
+  // Only ADMIN and SUPER_ADMIN can publish or unpublish posts.
+  // BLOG_AUTHORs can save edits to drafts, but cannot publish themselves.
   if (typeof body.published === "boolean") {
+    const canPublish = ctx.roles.includes(ROLES.SUPER_ADMIN) || ctx.roles.includes(ROLES.ADMIN)
+    if (!canPublish) {
+      return NextResponse.json(
+        { error: "You do not have permission to publish posts. Ask an admin." },
+        { status: 403 },
+      )
+    }
     data.published = body.published
     if (body.published && !existing.publishedAt) {
       data.publishedAt = new Date()

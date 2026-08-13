@@ -180,12 +180,19 @@ model BlogAuthor {
   displayName String
   bio         String?
   avatar      String?
+  role        String?  // e.g. "Technical Lead", "Web Dev Head", "ML Engineer"
+  skills      String?  // JSON array of skills: ["React","TypeScript","Node.js"]
+  github      String?
+  linkedin    String?
+  twitter     String?
   isApproved  Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   user  User?  @relation(onDelete: SetNull, fields: [userId], references: [id])
   blogs Blog[]
+  likes BlogLike[]
+  bookmarks BlogBookmark[]
 
   @@index([userId])
   @@index([isApproved])
@@ -202,6 +209,8 @@ model Blog {
   featured    Boolean   @default(false)
   readTime    String?
   viewCount   Int       @default(0)
+  likeCount   Int       @default(0)
+  bookmarkCount Int     @default(0)
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -214,6 +223,8 @@ model Blog {
   creator  User?         @relation(onDelete: SetNull, fields: [createdById], references: [id])
   tags     BlogTagMap[]
   comments BlogComment[]
+  likes    BlogLike[]
+  bookmarks BlogBookmark[]
 
   @@index([slug])
   @@index([published])
@@ -224,10 +235,14 @@ model Blog {
 }
 
 model BlogCategory {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  slug      String   @unique
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String   @default("#4A90E2")
+  iconName    String   @default("Hash")
+  displayOrder Int      @default(0)
+  createdAt   DateTime @default(now())
 
   blogs Blog[]
 }
@@ -267,12 +282,51 @@ model BlogComment {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  blog Blog  @relation(onDelete: Cascade, fields: [blogId], references: [id])
-  user User? @relation(onDelete: SetNull, fields: [userId], references: [id])
+  blog    Blog         @relation(onDelete: Cascade, fields: [blogId], references: [id])
+  user    User?        @relation(onDelete: SetNull, fields: [userId], references: [id])
+  parent  BlogComment? @relation("CommentReplies", onDelete: NoAction, fields: [parentId], references: [id])
+  replies BlogComment[] @relation("CommentReplies")
 
   @@index([blogId])
   @@index([userId])
   @@index([isApproved])
+  @@index([parentId])
+}
+
+// =========================================================
+// BLOG LIKES & BOOKMARKS (engagement)
+// =========================================================
+
+model BlogLike {
+  id        String   @id @default(cuid())
+  blogId    String
+  userId    String
+  authorId  String?  // optional link to BlogAuthor for guest-author likes
+  createdAt DateTime @default(now())
+
+  blog   Blog       @relation(onDelete: Cascade, fields: [blogId], references: [id])
+  author BlogAuthor? @relation(onDelete: Cascade, fields: [authorId], references: [id])
+
+  @@unique([blogId, userId])
+  @@index([blogId])
+  @@index([userId])
+  @@index([authorId])
+}
+
+model BlogBookmark {
+  id        String   @id @default(cuid())
+  blogId    String
+  userId    String
+  authorId  String?
+  createdAt DateTime @default(now())
+
+  blog   Blog       @relation(onDelete: Cascade, fields: [blogId], references: [id])
+  author BlogAuthor? @relation(onDelete: Cascade, fields: [authorId], references: [id])
+
+  @@unique([blogId, userId])
+  @@index([blogId])
+  @@index([userId])
+  @@index([authorId])
 }
 
 // =========================================================
