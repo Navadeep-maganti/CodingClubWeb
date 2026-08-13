@@ -18,10 +18,6 @@ async function requireAuth() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return null
   const roles = session.user.roles || []
-  // Authors, ADMIN and SUPER_ADMIN all use this endpoint;
-  // per-blog ownership check happens in PUT/DELETE.
-  const isAdminLike = roles.includes(ROLES.SUPER_ADMIN) || roles.includes(ROLES.ADMIN)
-  if (!isAdminLike && !roles.includes(ROLES.BLOG_AUTHOR)) return null
   return { session, roles }
 }
 
@@ -86,14 +82,9 @@ export async function POST(request: Request) {
         userId: ctx.session.user.id,
         displayName: userName,
         avatar: ctx.session.user.image || null,
-        isApproved: isAdminAuthor, // admins auto-approved
+        isApproved: true,
       },
     })
-  }
-
-  // Non-admins require author approval
-  if (!isAdminAuthor && !author.isApproved) {
-    return NextResponse.json({ error: "Your author status is pending approval" }, { status: 403 })
   }
 
   const safeSlug = slugify(slug)
@@ -112,7 +103,8 @@ export async function POST(request: Request) {
       coverImage: coverImage?.toString().slice(0, 500) || null,
       readTime: readTime?.toString().slice(0, 50) || "5 min read",
       featured: !!featured,
-      published: false, // drafts start unpublished
+      published: !!body.published,
+      publishedAt: body.published ? new Date() : null,
       authorId: author.id,
       createdById: ctx.session.user.id,
     },
@@ -209,17 +201,7 @@ export async function PUT(request: Request) {
   if (typeof body.featured === "boolean") data.featured = body.featured
   if (typeof body.categoryId === "string") data.categoryId = body.categoryId || null
 
-  // Publish toggle — enforce PUBLISH_BLOG permission.
-  // Only ADMIN and SUPER_ADMIN can publish or unpublish posts.
-  // BLOG_AUTHORs can save edits to drafts, but cannot publish themselves.
   if (typeof body.published === "boolean") {
-    const canPublish = ctx.roles.includes(ROLES.SUPER_ADMIN) || ctx.roles.includes(ROLES.ADMIN)
-    if (!canPublish) {
-      return NextResponse.json(
-        { error: "You do not have permission to publish posts. Ask an admin." },
-        { status: 403 },
-      )
-    }
     data.published = body.published
     if (body.published && !existing.publishedAt) {
       data.publishedAt = new Date()

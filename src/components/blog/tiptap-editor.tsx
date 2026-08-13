@@ -123,8 +123,45 @@ export function TipTapEditor({
     immediatelyRender: false, // SSR-safe
     editorProps: {
       attributes: {
-        class: "tiptap-content prose prose-invert prose-lg max-w-none focus:outline-none",
+        class: "tiptap-content prose prose-invert prose-lg max-w-none focus:outline-none min-h-[400px] p-6",
         spellcheck: "false",
+      },
+      handlePaste: (_view, event) => {
+        const items = Array.from(event.clipboardData?.items || [])
+        for (const item of items) {
+          if (item.type.indexOf("image") === 0) {
+            const file = item.getAsFile()
+            if (file && onImageUpload) {
+              event.preventDefault()
+              onImageUpload(file)
+                .then((url) => {
+                  if (url && editor) {
+                    editor.chain().focus().setImage({ src: url, alt: file.name }).run()
+                  }
+                })
+                .catch((err) => console.error("[tiptap] Paste image failed:", err))
+              return true
+            }
+          }
+        }
+        return false
+      },
+      handleDrop: (_view, event, _slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length) {
+          const file = event.dataTransfer.files[0]
+          if (file && file.type.startsWith("image/") && onImageUpload) {
+            event.preventDefault()
+            onImageUpload(file)
+              .then((url) => {
+                if (url && editor) {
+                  editor.chain().focus().setImage({ src: url, alt: file.name }).run()
+                }
+              })
+              .catch((err) => console.error("[tiptap] Drop image failed:", err))
+            return true
+          }
+        }
+        return false
       },
     },
     onUpdate: ({ editor }) => {

@@ -158,14 +158,22 @@ export default function MemberDashboardClient({ user }: { user: MemberUserData }
               <h1 className="font-heading font-bold text-4xl sm:text-5xl">
                 <span className="gradient-text-premium">Member Dashboard</span>
               </h1>
-              {user.roles.includes("SUPER_ADMIN") && (
-                <Link href="/dashboard/admin">
-                  <Button className="bg-[#4A90E2] hover:bg-[#5BA0F2]">
-                    <Shield className="mr-2 h-4 w-4" />
-                    Admin Dashboard
+              <div className="flex items-center gap-3">
+                <Link href="/blog/create">
+                  <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white">
+                    <PenSquare className="mr-2 h-4 w-4" />
+                    Write a Blog
                   </Button>
                 </Link>
-              )}
+                {user.roles.includes("SUPER_ADMIN") && (
+                  <Link href="/dashboard/admin">
+                    <Button className="bg-[#4A90E2] hover:bg-[#5BA0F2]">
+                      <Shield className="mr-2 h-4 w-4" />
+                      Admin Dashboard
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </div>
             <p className="text-[#B0B0B0]">Manage your profile, strengths, and social links.</p>
           </div>

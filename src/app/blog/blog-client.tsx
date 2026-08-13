@@ -17,6 +17,7 @@ import {
   Hash,
   Flame,
   X,
+  PenSquare,
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
@@ -160,10 +161,26 @@ export default function BlogClient({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed"
+            className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed mb-8"
           >
             {heroDescription}
           </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex items-center justify-center gap-4"
+          >
+            <Link
+              href="/blog/create"
+              className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white font-medium shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all duration-200 text-sm group"
+            >
+              <PenSquare className="w-4 h-4 text-blue-200 group-hover:scale-110 transition-transform" />
+              <span>Write an Article</span>
+              <ArrowRight className="w-4 h-4 text-blue-200 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
         </div>
       </section>
 

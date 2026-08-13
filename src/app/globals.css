@@ -1392,3 +1392,38 @@ body {
   font-family: "SF Mono", monospace;
   pointer-events: none;
 }
+
+/* --- TipTap Editor & Placeholder CSS --- */
+.tiptap-content p.is-editor-empty:first-child::before {
+  color: #64748b;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.tiptap-content blockquote {
+  border-left: 3px solid #4A90E2;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #e2e8f0;
+  margin: 1.5rem 0;
+}
+
+.tiptap-content pre {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin: 1.5rem 0;
+}
+
