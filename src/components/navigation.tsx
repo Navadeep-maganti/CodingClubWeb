@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
-import { Menu, X, Sparkles, LogIn, LayoutDashboard, LogOut, User, ChevronDown } from "lucide-react"
+import { Menu, X, LogIn, LayoutDashboard, LogOut, User, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
@@ -150,8 +150,7 @@ export default function Navigation() {
                   asChild
                   className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/25 group cursor-pointer btn-premium"
                 >
-                  <a href="https://discord.gg/DjHkM7TMDK" target="_blank" rel="noopener noreferrer">
-                    <Sparkles className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform duration-300" />
+                  <a href="https://discord.gg/DjHkM7TMDK" target="_blank" rel="noopener noreferrer" className="flex items-center">
                     Get Started
                   </a>
                 </Button>
@@ -231,8 +230,7 @@ export default function Navigation() {
                       Login
                     </Button>
                   </Link>
-                  <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold btn-premium">
-                    <Sparkles className="w-4 h-4 mr-2" />
+                  <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold btn-premium flex items-center justify-center">
                     Get Started
                   </Button>
                 </>

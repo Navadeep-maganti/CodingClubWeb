@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Calendar, Clock, MapPin, Users, ArrowRight, Sparkles } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, ArrowRight } from "lucide-react"
 import { motion } from "framer-motion"
 import { useSpotlight } from "@/hooks/use-magnetic"
 
@@ -207,7 +207,7 @@ function EmptyState({ title, message }: { title: string; message: string }) {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5" />
       <div className="relative z-10">
         <div className="w-16 h-16 rounded-2xl glass mx-auto mb-4 flex items-center justify-center">
-          <Sparkles className="h-8 w-8 text-blue-400" />
+          <Calendar className="h-8 w-8 text-blue-400" />
         </div>
         <h4 className="font-heading font-semibold text-xl text-white mb-2">{title}</h4>
         <p className="text-gray-400">{message}</p>

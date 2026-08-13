@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
 import PremiumPageBackground from "@/components/premium-page-background"
 import { Button } from "@/components/ui/button"
-import { Sparkles, Shield, Lock, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Loader2, Shield, Lock, AlertCircle, CheckCircle2 } from "lucide-react"
 import { motion } from "framer-motion"
 
 function LoginContent() {
@@ -102,7 +102,7 @@ function LoginContent() {
             >
               {loading ? (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Signing in...
                 </>
               ) : (
@@ -141,7 +141,7 @@ export default function LoginClient() {
   return (
     <Suspense fallback={
       <div className="pt-32 text-center relative z-10">
-        <Sparkles className="w-6 h-6 animate-spin mx-auto text-blue-400 mb-4" />
+        <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-400 mb-4" />
         <p className="text-gray-400">Loading...</p>
       </div>
     }>

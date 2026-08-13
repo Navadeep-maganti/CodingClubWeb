@@ -12,7 +12,7 @@ import {
   Heart,
   Bookmark,
   ChevronRight,
-  Sparkles,
+  Star,
   ArrowRight,
   Hash,
   Flame,
@@ -147,15 +147,7 @@ export default function BlogClient({
       {/* Hero Section */}
       <section className="pt-32 pb-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-7xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 glass rounded-full border border-white/10"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#4A90E2]" />
-            <span className="text-xs font-medium text-gray-300">Coding Club Stories</span>
-          </motion.div>
+
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -225,7 +217,7 @@ export default function BlogClient({
               <FilterChip
                 active={filter === "featured"}
                 onClick={() => setFilter("featured")}
-                icon={<Sparkles className="w-3.5 h-3.5" />}
+                icon={<Star className="w-3.5 h-3.5" />}
                 label="Featured"
               />
               <FilterChip
@@ -365,7 +357,7 @@ function FeaturedStory({ story }: { story: BlogListItem }) {
               background: `${story.category.color}15`,
             }}
           >
-            <Sparkles className="w-3 h-3" />
+            <Hash className="w-3 h-3" />
             {story.category.name}
           </span>
         )}
@@ -563,7 +555,7 @@ function BlogCard({ blog, index }: { blog: BlogListItem; index: number }) {
             {blog.featured && (
               <div className="absolute top-3 right-3">
                 <span className="flex items-center gap-1 px-2 py-1 rounded-full bg-[#4A90E2]/20 text-[#4A90E2] text-[10px] font-semibold border border-[#4A90E2]/30 glass-strong">
-                  <Sparkles className="w-3 h-3" /> Featured
+                  <Star className="w-3 h-3" /> Featured
                 </span>
               </div>
             )}
