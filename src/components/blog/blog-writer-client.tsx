@@ -268,20 +268,20 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
       <Navigation />
 
       {/* Action Header Bar */}
-      <section className="pt-24 pb-4 px-4 sm:px-6 lg:px-8 border-b border-white/10 relative z-0 backdrop-blur-md bg-black/40">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <section className="pt-24 pb-4 px-4 sm:px-8 lg:px-12 border-b border-white/10 relative z-0 backdrop-blur-md bg-black/40">
+        <div className="max-w-[1750px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Left: Back Link & Word Counter */}
           <div className="flex items-center gap-4">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 text-sm sm:text-base text-gray-300 hover:text-white transition-colors font-medium"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Blogs</span>
             </Link>
             <div className="h-4 w-[1px] bg-white/15 hidden sm:block" />
-            <div className="flex items-center gap-2 text-xs text-gray-400">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-300 font-medium">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>{wordCount} words</span>
               <span>•</span>
               <span>{readTime}</span>
@@ -289,61 +289,61 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
           </div>
 
           {/* Middle: View Mode Tabs */}
-          <div className="flex items-center bg-white/5 border border-white/10 p-1 rounded-xl">
+          <div className="flex items-center bg-white/5 border border-white/10 p-1.5 rounded-xl">
             <button
               onClick={() => setViewMode("edit")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                viewMode === "edit" ? "bg-[#4A90E2] text-white shadow-md" : "text-gray-400 hover:text-white"
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                viewMode === "edit" ? "bg-[#4A90E2] text-white shadow-md font-semibold" : "text-gray-300 hover:text-white"
               }`}
             >
               <span>Write</span>
             </button>
             <button
               onClick={() => setViewMode("split")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                viewMode === "split" ? "bg-[#4A90E2] text-white shadow-md" : "text-gray-400 hover:text-white"
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                viewMode === "split" ? "bg-[#4A90E2] text-white shadow-md font-semibold" : "text-gray-300 hover:text-white"
               }`}
             >
-              <span>Split</span>
+              <span>Split View</span>
             </button>
             <button
               onClick={() => setViewMode("preview")}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                viewMode === "preview" ? "bg-[#4A90E2] text-white shadow-md" : "text-gray-400 hover:text-white"
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                viewMode === "preview" ? "bg-[#4A90E2] text-white shadow-md font-semibold" : "text-gray-300 hover:text-white"
               }`}
             >
-              <span>Medium Reader Preview</span>
+              <span>Reader Preview</span>
             </button>
           </div>
 
           {/* Right: Settings Drawer & Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-xl border border-white/10 text-gray-300 hover:text-white transition-all ${
-                showSettings ? "bg-white/15" : "bg-white/5 hover:bg-white/10"
+              className={`p-2.5 rounded-xl border border-white/10 text-gray-200 hover:text-white transition-all ${
+                showSettings ? "bg-white/15 border-white/20" : "bg-white/5 hover:bg-white/10"
               }`}
               title="Post Settings"
             >
-              <span className="text-xs font-medium px-2">Settings</span>
+              <span className="text-xs sm:text-sm font-medium px-2">Settings</span>
             </button>
 
             <Button
               variant="outline"
               disabled={isSaving}
               onClick={() => handleSave(false)}
-              className="border-white/20 text-white hover:bg-white/10 text-xs"
+              className="border-white/20 text-white hover:bg-white/10 text-xs sm:text-sm font-medium py-2.5 px-4"
             >
-              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null}
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
               Save Draft
             </Button>
 
             <Button
               disabled={isSaving}
               onClick={() => handleSave(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-medium shadow-md shadow-blue-500/20"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-semibold py-2.5 px-5 shadow-lg shadow-blue-500/25"
             >
-              {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : null}
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
               Publish Article
             </Button>
           </div>
@@ -351,9 +351,9 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
       </section>
 
       {/* Main Workspace */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="flex-1 max-w-[1750px] w-full mx-auto px-4 sm:px-8 lg:px-12 py-8 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Canvas Area */}
-        <div className={`transition-all duration-300 ${showSettings ? "lg:col-span-8" : "lg:col-span-12"}`}>
+        <div className={`transition-all duration-300 ${showSettings ? "lg:col-span-9" : "lg:col-span-12"}`}>
           <div className="glass-strong border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6">
             {/* Cover Image Upload Area */}
             <div className="space-y-2">
@@ -561,7 +561,7 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
 
         {/* Sidebar Post Settings Drawer */}
         {showSettings && (
-          <div className="lg:col-span-4 space-y-6">
+          <div className="lg:col-span-3 space-y-6">
             <div className="glass-strong border border-white/10 rounded-2xl p-6 space-y-6 sticky top-28">
               <h3 className="font-heading font-semibold text-lg text-white flex items-center gap-2 border-b border-white/10 pb-3">
                 <Settings className="w-4 h-4 text-[#4A90E2]" />

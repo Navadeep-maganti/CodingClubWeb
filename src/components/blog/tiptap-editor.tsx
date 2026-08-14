@@ -127,7 +127,7 @@ export function TipTapEditor({
     immediatelyRender: false, // SSR-safe
     editorProps: {
       attributes: {
-        class: "tiptap-content prose prose-invert prose-lg max-w-none focus:outline-none min-h-[400px] p-6",
+        class: "tiptap-content prose prose-invert prose-lg max-w-none focus:outline-none min-h-[550px] lg:min-h-[650px] p-6 sm:p-8 text-[17px] sm:text-[18px] leading-[1.75]",
         spellcheck: "false",
       },
       handlePaste: (_view, event) => {
@@ -226,8 +226,8 @@ function Toolbar({ editor, onImageUpload }: ToolbarProps) {
       title={label}
       aria-label={label}
       className={cn(
-        "p-2 rounded-md transition-all duration-200 hover:bg-white/10",
-        active ? "bg-[#4A90E2]/20 text-[#4A90E2]" : "text-gray-400 hover:text-white",
+        "p-2.5 rounded-lg transition-all duration-200 hover:bg-white/10 text-sm font-medium",
+        active ? "bg-[#4A90E2]/25 text-[#4A90E2] ring-1 ring-[#4A90E2]/40" : "text-gray-300 hover:text-white",
       )}
     >
       {icon}
