@@ -61,6 +61,26 @@ export async function PUT(request: Request) {
     } catch {
       // already has role - ignore
     }
+
+    // Synchronize BlogAuthor record if assigning BLOG_AUTHOR role
+    if (role === ROLES.BLOG_AUTHOR) {
+      const existingAuthor = await db.blogAuthor.findUnique({ where: { userId } })
+      if (existingAuthor) {
+        await db.blogAuthor.update({
+          where: { id: existingAuthor.id },
+          data: { isApproved: true },
+        })
+      } else {
+        await db.blogAuthor.create({
+          data: {
+            userId,
+            displayName: user.name || user.email.split("@")[0] || "Blog Author",
+            avatar: user.image || null,
+            isApproved: true,
+          },
+        })
+      }
+    }
   } else if (action === "remove") {
     await db.userRole.deleteMany({ where: { userId, roleId: roleRow.id } })
     await logAudit({
@@ -70,7 +90,32 @@ export async function PUT(request: Request) {
       entityId: userId,
       metadata: { role },
     })
+
+    // Synchronize BlogAuthor record if removing BLOG_AUTHOR role
+    if (role === ROLES.BLOG_AUTHOR) {
+      await db.blogAuthor.updateMany({
+        where: { userId },
+        data: { isApproved: false },
+      })
+    }
   }
 
-  return NextResponse.json({ ok: true })
+  // Return refreshed author profile if applicable
+  const authorRecord = await db.blogAuthor.findUnique({ where: { userId } })
+
+  return NextResponse.json({
+    ok: true,
+    author: authorRecord
+      ? {
+          id: authorRecord.id,
+          displayName: authorRecord.displayName,
+          bio: authorRecord.bio || "",
+          avatar: authorRecord.avatar || "",
+          isApproved: authorRecord.isApproved,
+          userId: authorRecord.userId || "",
+          userEmail: user.email,
+          userName: user.name || "",
+        }
+      : null,
+  })
 }

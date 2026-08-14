@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { useSession } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Search,
@@ -89,10 +90,24 @@ export default function BlogClient({
   heroTitle,
   heroDescription,
 }: BlogClientProps) {
+  const { data: session } = useSession()
   const [search, setSearch] = useState("")
   const [activeCategory, setActiveCategory] = useState<string>("all")
   const [filter, setFilter] = useState<FilterMode>("latest")
   const [showFilters, setShowFilters] = useState(false)
+
+  const roles = (session?.user?.roles || []) as string[]
+  const canWrite = roles.includes("SUPER_ADMIN") || roles.includes("ADMIN") || roles.includes("BLOG_AUTHOR")
+  const writeHref = canWrite
+    ? "/blog/create"
+    : session?.user
+    ? "/dashboard/member"
+    : "/login?callbackUrl=/blog/create"
+  const writeLabel = canWrite
+    ? "Write an Article"
+    : session?.user
+    ? "Request Author Access"
+    : "Sign in to Write"
 
   // Filtered + sorted blogs
   const filteredBlogs = useMemo(() => {
@@ -173,11 +188,11 @@ export default function BlogClient({
             className="flex items-center justify-center gap-4"
           >
             <Link
-              href="/blog/create"
+              href={writeHref}
               className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 text-white font-medium shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 transition-all duration-200 text-sm group"
             >
               <PenSquare className="w-4 h-4 text-blue-200 group-hover:scale-110 transition-transform" />
-              <span>Write an Article</span>
+              <span>{writeLabel}</span>
               <ArrowRight className="w-4 h-4 text-blue-200 group-hover:translate-x-1 transition-transform" />
             </Link>
           </motion.div>

@@ -74,6 +74,42 @@ export default function MemberDashboardClient({ user }: { user: MemberUserData }
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
 
+  const [blogAuthorState, setBlogAuthorState] = useState(user.blogAuthor)
+  const [requestingAuthor, setRequestingAuthor] = useState(false)
+
+  const isSuperAdminOrAdmin = user.roles.includes("SUPER_ADMIN") || user.roles.includes("ADMIN")
+  const isApprovedAuthor = user.roles.includes("BLOG_AUTHOR") && blogAuthorState?.isApproved === true
+  const canWriteBlogs = isSuperAdminOrAdmin || isApprovedAuthor
+
+  const handleRequestAuthor = async () => {
+    setRequestingAuthor(true)
+    try {
+      const res = await fetch("/api/member/request-author", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ displayName: name || user.name }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to submit request")
+      }
+      const data = await res.json()
+      setBlogAuthorState(data.author)
+      toast({
+        title: "Author Request Submitted",
+        description: "Your application to become a Blog Author has been submitted to Administrators for approval.",
+      })
+    } catch (err) {
+      toast({
+        title: "Request Failed",
+        description: err instanceof Error ? err.message : "Unable to submit request",
+        variant: "destructive",
+      })
+    } finally {
+      setRequestingAuthor(false)
+    }
+  }
+
   const addStrength = () => {
     const s = newStrength.trim()
     if (s && !strengths.includes(s)) {
@@ -159,13 +195,24 @@ export default function MemberDashboardClient({ user }: { user: MemberUserData }
                 <span className="gradient-text-premium">Member Dashboard</span>
               </h1>
               <div className="flex items-center gap-3">
-                <Link href="/blog/create">
-                  <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white">
+                {canWriteBlogs ? (
+                  <Link href="/blog/create">
+                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white">
+                      <PenSquare className="mr-2 h-4 w-4" />
+                      Write a Blog
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    onClick={handleRequestAuthor}
+                    disabled={requestingAuthor || !!blogAuthorState}
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white"
+                  >
                     <PenSquare className="mr-2 h-4 w-4" />
-                    Write a Blog
+                    {blogAuthorState ? "Author Request Pending" : "Request Author Access"}
                   </Button>
-                </Link>
-                {user.roles.includes("SUPER_ADMIN") && (
+                )}
+                {(user.roles.includes("SUPER_ADMIN") || user.roles.includes("ADMIN")) && (
                   <Link href="/dashboard/admin">
                     <Button className="bg-[#4A90E2] hover:bg-[#5BA0F2]">
                       <Shield className="mr-2 h-4 w-4" />
@@ -175,7 +222,7 @@ export default function MemberDashboardClient({ user }: { user: MemberUserData }
                 )}
               </div>
             </div>
-            <p className="text-[#B0B0B0]">Manage your profile, strengths, and social links.</p>
+            <p className="text-[#B0B0B0]">Manage your profile, strengths, and blog author permissions.</p>
           </div>
 
           {/* Identity Card */}
@@ -207,33 +254,74 @@ export default function MemberDashboardClient({ user }: { user: MemberUserData }
           </Card>
 
           {/* Blog Author Card */}
-          {user.blogAuthor && (
-            <Card className="glass border-white/10 mb-6">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <PenSquare className="h-5 w-5 text-[#50C878]" />
-                  Blog Author Status
-                </CardTitle>
-                <CardDescription className="text-[#B0B0B0]">
-                  You {user.blogAuthor.isApproved ? "are" : "are not yet"} approved to publish blog posts.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+          <Card className="glass border-white/10 mb-6">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                  <PenSquare className="h-5 w-5 text-[#4A90E2]" />
+                  <span>Blog Author Status</span>
+                </div>
+                {blogAuthorState ? (
                   <Badge
                     className={
-                      user.blogAuthor.isApproved
+                      blogAuthorState.isApproved
                         ? "bg-[#50C878]/20 text-[#50C878] border-[#50C878]/30"
                         : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
                     }
                   >
-                    {user.blogAuthor.isApproved ? "Approved" : "Pending Approval"}
+                    {blogAuthorState.isApproved ? "Approved Author" : "Pending Approval"}
                   </Badge>
-                  <span className="text-[#B0B0B0] text-sm">Display name: {user.blogAuthor.displayName}</span>
+                ) : (
+                  <Badge variant="outline" className="text-gray-400 border-gray-600">
+                    Not Registered
+                  </Badge>
+                )}
+              </CardTitle>
+              <CardDescription className="text-[#B0B0B0]">
+                {canWriteBlogs
+                  ? "You are authorized to write and publish articles on the Coding Club Blog."
+                  : blogAuthorState
+                  ? "Your application to become a Blog Author is pending review by an Administrator."
+                  : "Blog publishing requires approval from a Super Admin or Admin."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {canWriteBlogs ? (
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <span className="text-gray-300 text-sm">
+                    Display Name: <strong className="text-white">{blogAuthorState?.displayName || user.name}</strong>
+                  </span>
+                  <Link href="/blog/create">
+                    <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white">
+                      <PenSquare className="mr-2 h-4 w-4" />
+                      Create New Article
+                    </Button>
+                  </Link>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              ) : blogAuthorState ? (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 text-sm text-yellow-200">
+                  <p className="font-semibold mb-1">Application Pending Review</p>
+                  <p className="text-yellow-200/80 text-xs">
+                    Your request was submitted. Once an Administrator approves your request, you will receive full access to write and publish blog posts.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <p className="text-gray-400 text-sm">
+                    Want to share tutorials, project showcases, or tech articles? Apply for author access.
+                  </p>
+                  <Button
+                    onClick={handleRequestAuthor}
+                    disabled={requestingAuthor}
+                    className="bg-blue-600 hover:bg-blue-500 text-white"
+                  >
+                    <PenSquare className="mr-2 h-4 w-4" />
+                    {requestingAuthor ? "Submitting..." : "Apply for Author Access"}
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Profile Editor */}
           <Card className="glass border-white/10 mb-6">

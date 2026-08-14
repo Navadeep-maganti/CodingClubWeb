@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { canUserWriteBlogs, RoleName } from "@/lib/rbac"
 import BlogWriterClient from "@/components/blog/blog-writer-client"
 
 export const metadata = {
@@ -14,6 +15,16 @@ export default async function BlogCreatePage() {
 
   if (!session?.user?.id) {
     redirect("/api/auth/signin?callbackUrl=/blog/create")
+  }
+
+  const userRoles = (session.user.roles || []) as RoleName[]
+  const authorRecord = await db.blogAuthor.findUnique({
+    where: { userId: session.user.id },
+  })
+
+  const isAllowed = canUserWriteBlogs(userRoles, authorRecord?.isApproved)
+  if (!isAllowed) {
+    redirect("/dashboard/unauthorized?reason=blog_author_required")
   }
 
   // Fetch categories for selection
@@ -39,3 +50,4 @@ export default async function BlogCreatePage() {
     />
   )
 }
+

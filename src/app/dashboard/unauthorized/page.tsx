@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button"
 import { ShieldX } from "lucide-react"
 import Link from "next/link"
 
-export default function UnauthorizedPage() {
+export default async function UnauthorizedPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ reason?: string }>
+}) {
+  const params = searchParams ? await searchParams : {}
+  const isBlogAuthorRequired = params.reason === "blog_author_required"
+
   return (
     <main className="min-h-screen relative">
       <PremiumPageBackground />
@@ -18,20 +25,23 @@ export default function UnauthorizedPage() {
               <ShieldX className="h-8 w-8 text-red-400" />
             </div>
           </div>
-          <h1 className="font-heading font-bold text-4xl mb-4 text-white">Access Denied</h1>
-          <p className="text-gray-400 mb-8">
-            You don&apos;t have permission to view this page. If you believe this is an error,
-            please contact the club administrator.
+          <h1 className="font-heading font-bold text-4xl mb-4 text-white">
+            {isBlogAuthorRequired ? "Author Access Required" : "Access Denied"}
+          </h1>
+          <p className="text-gray-400 mb-8 leading-relaxed">
+            {isBlogAuthorRequired
+              ? "You must be an approved Blog Author to write or edit articles. You can request author access from your Member Dashboard, and a Super Admin or Admin will review your application."
+              : "You don't have permission to view this page. If you believe this is an error, please contact the club administrator."}
           </p>
-          <div className="flex gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/dashboard/member">
-              <Button className="bg-blue-500 hover:bg-blue-600 btn-premium">
-                Go to Member Dashboard
+              <Button className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 btn-premium">
+                {isBlogAuthorRequired ? "Request Author Access" : "Go to Member Dashboard"}
               </Button>
             </Link>
-            <Link href="/">
-              <Button variant="outline" className="glass border-white/10 text-gray-200 hover:bg-white/5">
-                Back Home
+            <Link href="/blog">
+              <Button variant="outline" className="w-full sm:w-auto glass border-white/10 text-gray-200 hover:bg-white/5">
+                Explore Blogs
               </Button>
             </Link>
           </div>
@@ -41,3 +51,4 @@ export default function UnauthorizedPage() {
     </main>
   )
 }
+

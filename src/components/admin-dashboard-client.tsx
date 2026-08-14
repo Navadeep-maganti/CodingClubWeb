@@ -290,6 +290,8 @@ export default function AdminDashboardClient({ data }: { data: AdminData }) {
       toast({ title: "Failed", variant: "destructive" })
       return
     }
+    const resData = await res.json()
+
     setUsers(
       users.map((u) =>
         u.id === userId
@@ -300,6 +302,23 @@ export default function AdminDashboardClient({ data }: { data: AdminData }) {
           : u,
       ),
     )
+
+    if (role === ROLES.BLOG_AUTHOR) {
+      if (add && resData.author) {
+        setBlogAuthors((prev) => {
+          const exists = prev.some((a) => a.id === resData.author.id || a.userId === userId)
+          if (exists) {
+            return prev.map((a) => (a.userId === userId ? { ...a, isApproved: true } : a))
+          }
+          return [resData.author, ...prev]
+        })
+      } else if (!add) {
+        setBlogAuthors((prev) =>
+          prev.map((a) => (a.userId === userId ? { ...a, isApproved: false } : a)),
+        )
+      }
+    }
+
     toast({ title: add ? "Role assigned" : "Role removed", description: `${role} ${add ? "added" : "removed"}.` })
   }
 
@@ -461,8 +480,50 @@ export default function AdminDashboardClient({ data }: { data: AdminData }) {
       toast({ title: "Failed", variant: "destructive" })
       return
     }
+
+    const targetAuthor = blogAuthors.find((a) => a.id === id)
     setBlogAuthors(blogAuthors.map((a) => (a.id === id ? { ...a, isApproved: !current } : a)))
+
+    if (targetAuthor?.userId) {
+      setUsers(
+        users.map((u) =>
+          u.id === targetAuthor.userId
+            ? {
+                ...u,
+                roles: !current
+                  ? [...new Set([...u.roles, ROLES.BLOG_AUTHOR])]
+                  : u.roles.filter((r) => r !== ROLES.BLOG_AUTHOR),
+              }
+            : u,
+        ),
+      )
+    }
+
     toast({ title: !current ? "Author approved" : "Author revoked" })
+  }
+
+  const rejectBlogAuthorRequest = async (id: string, displayName: string) => {
+    if (!confirm(`Reject author request for ${displayName}?`)) return
+    const res = await fetch(`/api/admin/blog-authors?id=${id}`, { method: "DELETE" })
+    if (!res.ok) {
+      toast({ title: "Failed to reject request", variant: "destructive" })
+      return
+    }
+
+    const targetAuthor = blogAuthors.find((a) => a.id === id)
+    setBlogAuthors(blogAuthors.filter((a) => a.id !== id))
+
+    if (targetAuthor?.userId) {
+      setUsers(
+        users.map((u) =>
+          u.id === targetAuthor.userId
+            ? { ...u, roles: u.roles.filter((r) => r !== ROLES.BLOG_AUTHOR) }
+            : u,
+        ),
+      )
+    }
+
+    toast({ title: "Application Rejected", description: `Author request for ${displayName} was rejected.` })
   }
 
   // --- Upload handler ---
@@ -1021,49 +1082,116 @@ export default function AdminDashboardClient({ data }: { data: AdminData }) {
 
             {/* ============= AUTHORS TAB ============= */}
             <TabsContent value="authors" className="space-y-6 mt-6">
+              {/* Section 1: Pending Applications */}
               <Card className="glass border-white/10">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
-                    <PenSquare className="h-5 w-5 text-[#FFB84D]" /> Blog Authors
+                    <PenSquare className="h-5 w-5 text-yellow-400" /> Pending Author Requests
                   </CardTitle>
                   <CardDescription className="text-[#B0B0B0]">
-                    Approve or revoke blog author privileges. To make a user a blog author, assign BLOG_AUTHOR role in the Members tab.
+                    Review member applications requesting permission to write and publish blog articles.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {blogAuthors.filter((a) => !a.isApproved).length === 0 ? (
+                      <p className="text-[#B0B0B0] text-sm text-center py-4">No pending author applications.</p>
+                    ) : (
+                      blogAuthors
+                        .filter((a) => !a.isApproved)
+                        .map((a) => (
+                          <div key={a.id} className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              {a.avatar ? (
+                                <img src={a.avatar} alt={a.displayName} className="w-10 h-10 rounded-full object-cover ring-2 ring-yellow-500/30" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-yellow-500/20 text-yellow-300 font-bold flex items-center justify-center">
+                                  {a.displayName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-white font-semibold flex items-center gap-2">
+                                  {a.displayName}
+                                  <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
+                                    Pending Review
+                                  </Badge>
+                                </p>
+                                <p className="text-gray-400 text-xs">{a.userEmail || "No linked email"}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 self-end sm:self-center">
+                              <Button
+                                size="sm"
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4"
+                                onClick={() => toggleBlogAuthorApproval(a.id, false)}
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1.5" /> Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 font-medium px-4"
+                                onClick={() => rejectBlogAuthorRequest(a.id, a.displayName)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1.5" /> Reject
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Section 2: Approved Blog Authors */}
+              <Card className="glass border-white/10">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center gap-2">
+                    <UserCheck className="h-5 w-5 text-[#50C878]" /> Approved Blog Authors
+                  </CardTitle>
+                  <CardDescription className="text-[#B0B0B0]">
+                    Members authorized to write articles. To grant author access to a user directly, assign the BLOG_AUTHOR role in the Members tab.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="max-h-[600px] overflow-y-auto space-y-2 pr-2">
-                    {blogAuthors.length === 0 && (
-                      <p className="text-[#B0B0B0] text-sm text-center py-4">No blog authors yet.</p>
+                    {blogAuthors.filter((a) => a.isApproved).length === 0 ? (
+                      <p className="text-[#B0B0B0] text-sm text-center py-4">No approved blog authors yet.</p>
+                    ) : (
+                      blogAuthors
+                        .filter((a) => a.isApproved)
+                        .map((a) => (
+                          <div key={a.id} className="p-3 rounded-lg bg-[#1A1F2E]/50 border border-white/5 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {a.avatar ? (
+                                <img src={a.avatar} alt={a.displayName} className="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/20" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center">
+                                  {a.displayName.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <p className="text-[#E0E0E0] font-medium truncate">{a.displayName}</p>
+                                <p className="text-[#B0B0B0] text-xs truncate">{a.userEmail || "(no linked user)"}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge className="bg-[#50C878]/20 text-[#50C878] border-[#50C878]/30">
+                                Approved Author
+                              </Badge>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => toggleBlogAuthorApproval(a.id, true)}
+                                className="text-red-400 hover:bg-red-500/10 text-xs"
+                                title="Revoke Author Privileges"
+                              >
+                                <XCircle className="h-4 w-4 mr-1" /> Revoke
+                              </Button>
+                            </div>
+                          </div>
+                        ))
                     )}
-                    {blogAuthors.map((a) => (
-                      <div key={a.id} className="p-3 rounded-lg bg-[#1A1F2E]/50 border border-white/5 flex items-center gap-3">
-                        {a.avatar && (
-                           
-                          <img src={a.avatar} alt={a.displayName} className="w-10 h-10 rounded-full object-cover" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[#E0E0E0] font-medium truncate">{a.displayName}</p>
-                          <p className="text-[#B0B0B0] text-sm truncate">{a.userEmail || "(no linked user)"}</p>
-                        </div>
-                        <Badge
-                          className={
-                            a.isApproved
-                              ? "bg-[#50C878]/20 text-[#50C878] border-[#50C878]/30"
-                              : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                          }
-                        >
-                          {a.isApproved ? "Approved" : "Pending"}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleBlogAuthorApproval(a.id, a.isApproved)}
-                          className={a.isApproved ? "text-red-400 hover:bg-red-500/10" : "text-[#50C878] hover:bg-[#50C878]/10"}
-                        >
-                          {a.isApproved ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>

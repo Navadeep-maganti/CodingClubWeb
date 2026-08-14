@@ -168,3 +168,16 @@ export function getHighestRole(roles: RoleName[]): RoleName | null {
   if (roles.includes(ROLES.MEMBER)) return ROLES.MEMBER
   return null
 }
+
+/**
+ * Checks if a user is authorized to write or edit blogs.
+ * Admins & Super Admins can always write blogs.
+ * Blog authors can write blogs ONLY IF their BlogAuthor record is approved (isApproved = true).
+ */
+export function canUserWriteBlogs(roles: RoleName[], isApprovedAuthor?: boolean): boolean {
+  if (roles.includes(ROLES.SUPER_ADMIN) || roles.includes(ROLES.ADMIN)) {
+    return true
+  }
+  return roles.includes(ROLES.BLOG_AUTHOR) && isApprovedAuthor === true
+}
+

@@ -72,11 +72,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
-  // Get or create BlogAuthor record for this user
+  const isAdmin = ctx.roles.includes(ROLES.SUPER_ADMIN) || ctx.roles.includes(ROLES.ADMIN)
   let author = await db.blogAuthor.findUnique({ where: { userId: ctx.session.user.id } })
-  const isAdminAuthor = ctx.roles.includes(ROLES.SUPER_ADMIN) || ctx.roles.includes(ROLES.ADMIN)
-  if (!author) {
-    const userName = ctx.session.user.name || "Anonymous Author"
+
+  const isApprovedAuthor = ctx.roles.includes(ROLES.BLOG_AUTHOR) && author?.isApproved === true
+
+  if (!isAdmin && !isApprovedAuthor) {
+    return NextResponse.json(
+      { error: "You must be an approved Blog Author to write articles. Please request author access from your dashboard." },
+      { status: 403 }
+    )
+  }
+
+  // Create BlogAuthor record if an Admin writes for the first time without an author profile
+  if (!author && isAdmin) {
+    const userName = ctx.session.user.name || "Administrator"
     author = await db.blogAuthor.create({
       data: {
         userId: ctx.session.user.id,
@@ -85,6 +95,10 @@ export async function POST(request: Request) {
         isApproved: true,
       },
     })
+  }
+
+  if (!author) {
+    return NextResponse.json({ error: "Author profile not found" }, { status: 400 })
   }
 
   const safeSlug = slugify(slug)
@@ -173,14 +187,19 @@ export async function PUT(request: Request) {
   const existing = await db.blog.findUnique({ where: { id }, include: { author: true } })
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
-  // Ownership check: authors can only edit their own blogs; ADMIN + SUPER_ADMIN can edit any
+  // Ownership & Approval check: authors can only edit their own blogs if approved; ADMIN + SUPER_ADMIN can edit any
   const canEditAny = ctx.roles.includes(ROLES.SUPER_ADMIN) || ctx.roles.includes(ROLES.ADMIN)
   if (!canEditAny) {
     const myAuthor = await db.blogAuthor.findUnique({ where: { userId: ctx.session.user.id } })
+    const isApprovedAuthor = ctx.roles.includes(ROLES.BLOG_AUTHOR) && myAuthor?.isApproved === true
+    if (!isApprovedAuthor) {
+      return NextResponse.json({ error: "You must be an approved Blog Author to edit articles." }, { status: 403 })
+    }
     if (existing.authorId !== myAuthor?.id) {
       return NextResponse.json({ error: "You can only edit your own blogs" }, { status: 403 })
     }
   }
+
 
   const data: any = {}
   if (typeof body.title === "string") data.title = body.title.slice(0, 300)
