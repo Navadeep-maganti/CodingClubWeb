@@ -372,11 +372,17 @@ function FeaturedStory({ story }: { story: BlogListItem }) {
   return (
     <Link href={`/blog/${story.slug}`} className="group block featured-story">
       <div className="absolute inset-0 -z-10">
-        <img
-          src={story.coverImage}
-          alt={story.title}
-          className="w-full h-full object-cover"
-        />
+        {story.coverImage ? (
+          <img
+            src={story.coverImage}
+            alt={story.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-white/5 flex items-center justify-center">
+            <span className="text-white/20 font-bold text-4xl">{story.title.charAt(0)}</span>
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#02040A] via-[#02040A]/80 to-transparent" />
       </div>
       <div className="relative z-10 p-8 sm:p-12 lg:p-16 max-w-4xl">
@@ -516,11 +522,17 @@ function TrendingCard({ item, rank }: { item: TrendingItem; rank: number }) {
     <Link href={`/blog/${item.slug}`} className="group block blog-card">
       <div className="glass-strong rounded-2xl overflow-hidden border border-white/10 h-full">
         <div className="relative h-48 overflow-hidden">
-          <img
-            src={item.coverImage}
-            alt={item.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          {item.coverImage ? (
+            <img
+              src={item.coverImage}
+              alt={item.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full bg-white/5 flex items-center justify-center">
+              <span className="text-white/20 font-bold text-2xl">{item.title.charAt(0)}</span>
+            </div>
+          )}
           <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FF6B6B] text-white text-xs font-bold">
             <Flame className="w-3 h-3" fill="currentColor" />
             #{rank}
@@ -577,12 +589,18 @@ function BlogCard({ blog, index }: { blog: BlogListItem; index: number }) {
         <div className="glass-strong rounded-2xl overflow-hidden border border-white/10 hover:border-[#4A90E2]/30 transition-all duration-500 h-full flex flex-col">
           {/* Cover image */}
           <div className="relative h-52 overflow-hidden bg-gray-900">
-            <img
-              src={blog.coverImage}
-              alt={blog.title}
-              loading="lazy"
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-            />
+            {blog.coverImage ? (
+              <img
+                src={blog.coverImage}
+                alt={blog.title}
+                loading="lazy"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              />
+            ) : (
+              <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                <span className="text-white/20 font-bold text-2xl">{blog.title.charAt(0)}</span>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             {blog.featured && (
               <div className="absolute top-3 right-3">

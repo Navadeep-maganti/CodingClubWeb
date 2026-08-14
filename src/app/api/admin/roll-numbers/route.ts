@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions, requireAdmin, requireSuperAdmin } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
 import { ROLES } from "@/lib/rbac"
@@ -15,14 +15,7 @@ import { validateRollNumber } from "@/lib/validation"
  *
  * Per the RBAC matrix, ADD_APPROVED_ROLL / REMOVE_APPROVED_ROLL are
  * SUPER_ADMIN-only — ADMIN does NOT inherit these.
- */
-async function requireSuperAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
-  const roles = session.user.roles || []
-  if (!roles.includes(ROLES.SUPER_ADMIN)) return null
-  return session
-}
+ */
 
 export async function GET() {
   const session = await requireSuperAdmin()

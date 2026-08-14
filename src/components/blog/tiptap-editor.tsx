@@ -1,6 +1,7 @@
 "use client"
 
 import { useEditor, EditorContent, type Editor } from "@tiptap/react"
+import DOMPurify from "isomorphic-dompurify"
 import StarterKit from "@tiptap/starter-kit"
 import { Link } from "@tiptap/extension-link"
 import { Image } from "@tiptap/extension-image"
@@ -86,6 +87,9 @@ export function TipTapEditor({
       StarterKit.configure({
         codeBlock: false, // replaced by CodeBlockLowlight below
         heading: { levels: [1, 2, 3, 4] },
+        // Disabled here because we register them separately with custom config below
+        link: false,
+        underline: false,
       }),
       Underline,
       Link.configure({
@@ -165,7 +169,7 @@ export function TipTapEditor({
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML())
+      onChange(DOMPurify.sanitize(editor.getHTML()))
     },
   })
 

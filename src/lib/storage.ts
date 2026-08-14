@@ -31,6 +31,34 @@ export interface ImageStorageProvider {
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
 
+/**
+ * Validates the file's magic bytes (file signature) to ensure it's actually an image
+ * and not a spoofed file with a manipulated extension or MIME type.
+ */
+function validateImageBytes(bytes: ArrayBuffer): boolean {
+  if (bytes.byteLength < 12) return false;
+  const arr = new Uint8Array(bytes);
+  
+  // JPEG: FF D8 FF
+  if (arr[0] === 0xFF && arr[1] === 0xD8 && arr[2] === 0xFF) return true;
+  
+  // PNG: 89 50 4E 47
+  if (arr[0] === 0x89 && arr[1] === 0x50 && arr[2] === 0x4E && arr[3] === 0x47) return true;
+  
+  // GIF: GIF8
+  if (arr[0] === 0x47 && arr[1] === 0x49 && arr[2] === 0x46 && arr[3] === 0x38) return true;
+  
+  // WebP: RIFF....WEBP
+  if (
+    arr[0] === 0x52 && arr[1] === 0x49 && arr[2] === 0x46 && arr[3] === 0x46 && // RIFF
+    arr[8] === 0x57 && arr[9] === 0x45 && arr[10] === 0x42 && arr[11] === 0x50  // WEBP
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 // =====================================================================
 // SUPABASE STORAGE PROVIDER
 // =====================================================================
@@ -46,6 +74,11 @@ class SupabaseStorageProvider implements ImageStorageProvider {
       throw new Error(`File too large: ${file.size} bytes (max ${MAX_SIZE_BYTES})`)
     }
 
+    const bytes = await file.arrayBuffer()
+    if (!validateImageBytes(bytes)) {
+      throw new Error("Invalid file content: Magic byte verification failed. The file is not a valid image.")
+    }
+
     const client = getSupabase()
     if (!client) throw new Error("Supabase client not initialised")
 
@@ -58,7 +91,6 @@ class SupabaseStorageProvider implements ImageStorageProvider {
     const objectPath = `${safeSubdir}/${filename}`
 
     // Upload to Supabase Storage
-    const bytes = await file.arrayBuffer()
     const { error } = await client
       .storage
       .from(SUPABASE_BUCKET)
@@ -124,6 +156,11 @@ class LocalStorageProvider implements ImageStorageProvider {
       throw new Error(`File too large: ${file.size} bytes (max ${MAX_SIZE_BYTES})`)
     }
 
+    const bytes = await file.arrayBuffer()
+    if (!validateImageBytes(bytes)) {
+      throw new Error("Invalid file content: Magic byte verification failed. The file is not a valid image.")
+    }
+
     const ext = (file.name.split(".").pop() || "jpg").toLowerCase()
     const random = crypto.randomBytes(12).toString("hex")
     const filename = `${Date.now()}-${random}.${ext}`
@@ -136,7 +173,6 @@ class LocalStorageProvider implements ImageStorageProvider {
     await fs.mkdir(targetDir, { recursive: true })
     const fullPath = path.join(targetDir, filename)
 
-    const bytes = await file.arrayBuffer()
     await fs.writeFile(fullPath, Buffer.from(bytes))
 
     const url = `${PUBLIC_PREFIX}/${subdir}/${filename}`

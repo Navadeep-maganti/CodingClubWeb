@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
+import { cn } from "@/lib/utils"
+import DOMPurify from "isomorphic-dompurify"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -530,7 +532,7 @@ export default function BlogWriterClient({ initialData, categories, user }: Blog
                           remarkPlugins={[remarkGfm]}
                           rehypePlugins={[rehypeRaw, rehypeHighlight]}
                         >
-                          {content}
+                          {DOMPurify.sanitize(content)}
                         </ReactMarkdown>
                       ) : (
                         <p className="text-gray-500 italic">Start writing to see live formatted Medium preview...</p>

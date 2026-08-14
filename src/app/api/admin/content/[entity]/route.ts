@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions, requireAdmin, requireSuperAdmin } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
 import { ROLES } from "@/lib/rbac"
@@ -20,15 +20,7 @@ import { clearSettingsCache } from "@/lib/site-config"
  *   PUT    ?id=... -> update
  *   DELETE ?id=... -> delete
  */
-
-async function requireAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
-  const roles = session.user.roles || []
-  // Content management permissions granted to both SUPER_ADMIN and ADMIN
-  if (!roles.includes(ROLES.SUPER_ADMIN) && !roles.includes(ROLES.ADMIN)) return null
-  return session
-}
+
 
 type EntityName =
   | "pillars"

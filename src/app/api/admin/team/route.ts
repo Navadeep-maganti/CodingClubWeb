@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions, requireAdmin, requireSuperAdmin } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
 import { ROLES } from "@/lib/rbac"
@@ -12,14 +12,7 @@ import { ROLES } from "@/lib/rbac"
  * DELETE /api/admin/team?id=<id>
  *
  * Per RBAC matrix, MANAGE_TEAM is granted to both SUPER_ADMIN and ADMIN.
- */
-async function requireAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
-  const roles = session.user.roles || []
-  if (!roles.includes(ROLES.SUPER_ADMIN) && !roles.includes(ROLES.ADMIN)) return null
-  return session
-}
+ */
 
 export async function PUT(request: Request) {
   const session = await requireAdmin()

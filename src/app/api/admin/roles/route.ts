@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions, requireAdmin, requireSuperAdmin } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
 import { ROLES, ALL_ROLES, type RoleName } from "@/lib/rbac"
@@ -10,14 +10,7 @@ import { ROLES, ALL_ROLES, type RoleName } from "@/lib/rbac"
  *
  * PUT /api/admin/roles
  * body: { userId: string, role: RoleName, action: "add" | "remove" }
- */
-async function requireAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
-  const roles = session.user.roles || []
-  if (!roles.includes(ROLES.SUPER_ADMIN)) return null
-  return session
-}
+ */
 
 export async function PUT(request: Request) {
   const session = await requireAdmin()

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions, requireAdmin, requireSuperAdmin } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
 import { ROLES } from "@/lib/rbac"
@@ -13,7 +13,8 @@ import { slugify } from "@/lib/storage"
  * POST   /api/admin/blogs                 -> create a new blog (draft)
  * PUT    /api/admin/blogs?id=<id>         -> update an existing blog
  * DELETE /api/admin/blogs?id=<id>         -> delete a blog
- */
+ */
+
 async function requireAuth() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return null

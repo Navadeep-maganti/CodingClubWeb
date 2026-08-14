@@ -1,4 +1,5 @@
 import type { NextAuthOptions } from "next-auth"
+import { getServerSession } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { db } from "@/lib/db"
@@ -110,7 +111,7 @@ export const authOptions: NextAuthOptions = {
       // Step 1: validate email format (server-side)
       const check = validateLoginEmail(email)
       if (!check.ok) {
-        console.warn(`[auth] Sign-in denied for ${email}: ${check.reason}`)
+        console.warn(`[auth] Sign-in denied: invalid email format`)
         return false
       }
       const rollNumber = check.rollNumber
@@ -120,7 +121,7 @@ export const authOptions: NextAuthOptions = {
         where: { rollNumber },
       })
       if (!approved) {
-        console.warn(`[auth] Sign-in denied: roll number ${rollNumber} not in whitelist`)
+        console.warn(`[auth] Sign-in denied: roll number not in whitelist`)
         // We can't easily redirect from here; the error page will explain.
         return false
       }
@@ -229,4 +230,20 @@ declare module "next-auth" {
     rollNumber?: string | null
     roles?: RoleName[]
   }
+}
+
+export async function requireAdmin() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return null
+  const roles = session.user.roles || []
+  if (!roles.includes(ROLES.ADMIN) && !roles.includes(ROLES.SUPER_ADMIN)) return null
+  return session
+}
+
+export async function requireSuperAdmin() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) return null
+  const roles = session.user.roles || []
+  if (!roles.includes(ROLES.SUPER_ADMIN)) return null
+  return session
 }

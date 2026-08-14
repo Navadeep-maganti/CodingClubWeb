@@ -21,6 +21,7 @@ export type AuditAction =
   | "IMAGE_UPLOADED"
   | "LOGIN_SUCCESS"
   | "LOGIN_DENIED"
+  | "SITE_SETTINGS_UPDATED"
 
 export interface AuditEntry {
   actorId?: string | null

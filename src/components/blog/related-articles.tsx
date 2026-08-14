@@ -82,12 +82,18 @@ export default function RelatedArticles({ slug }: RelatedArticlesProps) {
             <Link href={`/blog/${article.slug}`} className="group block blog-card h-full">
               <div className="glass-strong rounded-2xl overflow-hidden border border-white/10 hover:border-[#4A90E2]/30 transition-all duration-500 h-full flex flex-col">
                 <div className="relative h-32 overflow-hidden">
-                  <img
-                    src={article.coverImage}
-                    alt={article.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+                  {article.coverImage ? (
+                    <img
+                      src={article.coverImage}
+                      alt={article.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                      <span className="text-white/20 font-bold text-xl">{article.title.charAt(0)}</span>
+                    </div>
+                  )}
                   {article.category && (
                     <span
                       className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-semibold glass-strong border"

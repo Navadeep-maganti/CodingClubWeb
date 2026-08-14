@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm"
 import rehypeRaw from "rehype-raw"
 import rehypeHighlight from "rehype-highlight"
 import { injectHeadingIds, generateTocFromMarkdown, type TocItem } from "@/lib/blog-utils"
+import DOMPurify from "isomorphic-dompurify"
 
 interface ArticleContentProps {
   content: string
@@ -167,7 +168,7 @@ export default function ArticleContent({ content, toc }: ArticleContentProps) {
             ),
           }}
         >
-          {content}
+          {DOMPurify.sanitize(content)}
         </ReactMarkdown>
       </div>
 

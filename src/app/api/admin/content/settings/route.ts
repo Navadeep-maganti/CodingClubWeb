@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions, requireAdmin, requireSuperAdmin } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { logAudit } from "@/lib/audit"
 import { ROLES } from "@/lib/rbac"
@@ -15,14 +15,7 @@ import { clearSettingsCache } from "@/lib/site-config"
  *   body: { updates: { key: value, ... } }
  *
  * GET /api/admin/content/settings -> returns all settings (for admin UI)
- */
-async function requireAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) return null
-  const roles = session.user.roles || []
-  if (!roles.includes(ROLES.SUPER_ADMIN) && !roles.includes(ROLES.ADMIN)) return null
-  return session
-}
+ */
 
 export async function GET() {
   const session = await requireAdmin()
@@ -60,7 +53,7 @@ export async function PUT(request: Request) {
 
   await logAudit({
     actorId: session.user.id,
-    action: "USER_UPDATED",
+    action: "SITE_SETTINGS_UPDATED",
     entityType: "SiteSetting",
     entityId: null,
     metadata: { keys: Object.keys(updates) },
