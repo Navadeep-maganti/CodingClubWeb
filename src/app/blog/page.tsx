@@ -1,8 +1,6 @@
 import { db } from "@/lib/db"
 import { getSiteSettings } from "@/lib/site-config"
 import BlogClient from "./blog-client"
-import { Suspense } from "react"
-import BlogLoading from "./loading"
 
 export const dynamic = "force-dynamic"
 
@@ -131,15 +129,13 @@ export default async function BlogPage() {
   }))
 
   return (
-    <Suspense fallback={<BlogLoading />}>
-      <BlogClient
-        blogs={formattedBlogs}
-        categories={formattedCategories}
-        tags={formattedTags}
-        trending={formattedTrending}
-        heroTitle={heroTitle}
-        heroDescription={heroDescription}
-      />
-    </Suspense>
+    <BlogClient
+      blogs={formattedBlogs}
+      categories={formattedCategories}
+      tags={formattedTags}
+      trending={formattedTrending}
+      heroTitle={heroTitle}
+      heroDescription={heroDescription}
+    />
   )
 }
